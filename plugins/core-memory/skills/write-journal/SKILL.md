@@ -48,5 +48,7 @@ No significant entries this session.
 
 - Not every session produces journal entries — that's normal
 - But you MUST always create task/journal.md (even if empty)
+- If the `journal_*` MCP tools are unavailable in this session, still create
+  task/journal.md noting that memory was unavailable (skip steps 1-3 above)
 - Quality over quantity — one good entry beats five trivial ones
 - Include reasoning in decisions, not just the choice
