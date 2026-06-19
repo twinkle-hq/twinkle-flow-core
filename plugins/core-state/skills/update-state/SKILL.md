@@ -10,12 +10,11 @@ Update the agent state file that persists between sessions.
 1. Read current `state.md` in the repo root (if it exists)
 2. Read `task/context.json` to get the current task identifier
 3. Update relevant sections based on what happened this session:
-   - **Текущий фокус** — if priorities shifted
-   - **Активные задачи/инициативы** — if status changed
-   - **Известные проблемы** — if discovered or resolved
-   - **Ключевые проекты** — if progress was made (executive only)
-   - **Ограничения** — if new blockers found (executive only)
-   - **Открытые решения** — if decisions needed (executive only)
+   - **Current focus** — if priorities shifted
+   - **Active work / status** — if task or initiative status changed
+   - **Known issues / blockers** — if discovered or resolved
+   - Add role-specific sections as relevant (e.g. key projects, constraints,
+     open decisions) — only keep sections that earn their place.
 4. Set `last_task` in the first line to the current task identifier
 5. Update the date in the heading
 
@@ -25,8 +24,8 @@ Update the agent state file that persists between sessions.
 <!-- last_task: SNAP-123 -->
 # {Worker Name} State — {YYYY-MM-DD}
 
-## Текущий фокус
-...sections appropriate to role...
+## Current focus
+...sections appropriate to this worker's role...
 ```
 
 ## Rules

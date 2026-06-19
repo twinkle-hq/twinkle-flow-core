@@ -19,8 +19,8 @@ session:
           INPUT=$(cat)
           STOP_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)
           if [ "$STOP_ACTIVE" = "true" ]; then exit 0; fi
-          if [ ! -f state.md ]; then
-            echo "BLOCKED: You must update state.md before ending the session. Use /update-state skill." >&2
+          if [ ! -f state.md ] || ! head -n1 state.md | grep -q '<!-- last_task:'; then
+            echo "BLOCKED: You must update state.md (first line must be a <!-- last_task: ... --> marker) before ending the session. Use /update-state skill." >&2
             exit 2
           fi
         blocking: true
