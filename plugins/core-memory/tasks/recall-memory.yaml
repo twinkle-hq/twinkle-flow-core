@@ -1,0 +1,44 @@
+name: recall-memory
+description: "Search working memory for relevant context — past decisions, outcomes, feedback, observations. Use when: When you need context about past work, prior decisions, what worked or failed, patterns across tasks"
+trigger: "TRIGGER when: starting a task in a project you have worked on before, encountering a recurring error, making a design decision where past context matters, user says 'what did we decide about X' or 'remember when we...', debugging an issue you may have seen before"
+complexity: simple
+outputs:
+  - memory-context
+
+anti_rationalization:
+  title: "Common traps when recalling memory"
+  entries:
+    - thought: "I already know the context, no need to search"
+      reality: "Memory may contain decisions or corrections from past sessions you are not aware of — always search first"
+    - thought: "No relevant entries after one search, nothing to apply"
+      reality: "Try at least 2 different query formulations before concluding nothing is relevant — broaden terms, try synonyms"
+    - thought: "This is a simple task, past context won't help"
+      reality: "Simple tasks often have non-obvious constraints discovered in prior sessions — recall is cheap, missing context is expensive"
+
+phases:
+  search:
+    goal: "Find relevant journal entries"
+    tools:
+      - journal_search
+    actions:
+      - "Determine what context you need — formulate a specific search query"
+      - "journal_search with query, optionally filter by type (decision/outcome/feedback/observation) and tags"
+      - "If results are sparse, broaden the query or try different keywords"
+      - "If results are too many, narrow with date_from, tags, or type filter"
+    gate: "At least one search query executed; results reviewed or empty result confirmed with broadened retry"
+    next: apply
+
+  apply:
+    goal: "Extract actionable insights from memory"
+    actions:
+      - "Read each relevant entry — what was decided, what happened, what was learned"
+      - "Identify patterns: recurring issues, successful strategies, known pitfalls"
+      - "Apply insights to current task — adjust approach based on past experience"
+      - "Explicitly reference each relevant entry in current task reasoning, or state why no entries are applicable"
+    gate: "Each relevant entry explicitly referenced in current task reasoning, or explicit statement of why no entries are applicable"
+    next: null
+
+terminal_state:
+  description: "Past context retrieved and applied to current task decision-making"
+  invoked_by:
+    - "Any task via the memory plugin capability"

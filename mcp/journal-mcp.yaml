@@ -1,0 +1,12 @@
+name: journal-mcp
+description: Semantic journal for workers (vector search + SQLite).
+connection_type: internal
+url: http://journal-mcp:3003
+registration_endpoint: http://journal-mcp:3003/register
+registration_payload_fields:
+  - role
+  - task_id
+registration_response:
+  token_field: token
+auth:
+  type: internal_secret

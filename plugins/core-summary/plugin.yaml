@@ -1,0 +1,12 @@
+name: core-summary
+description: "Requires agent to write structured execution summary before task completion"
+
+session:
+  skills:
+    - skills/write-summary/SKILL.md
+  hooks:
+    Stop:
+      - name: "Validate execution summary"
+        command: "test -f task/summary.yaml && grep -q '^type:' task/summary.yaml && grep -q '^summary:' task/summary.yaml || (echo 'BLOCKED: You must create task/summary.yaml with type and summary fields before the session can end.' >&2; exit 2)"
+        blocking: true
+        message: "You must create task/summary.yaml with type and summary fields before the session can end."

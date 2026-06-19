@@ -1,0 +1,41 @@
+name: core-memory
+description: "Persistent working memory — automatically recalls relevant past context at session start and prompts saving learnings at session end"
+
+session:
+  mcp:
+    - journal-mcp
+  capabilities:
+    - recall-memory
+  skills:
+    - skills/write-journal/SKILL.md
+  hooks:
+    SessionStart:
+      - name: "Read relevant memory"
+        command: |
+          TASK_TITLE=$(jq -r '.title // empty' task/context.json 2>/dev/null)
+          WORKSPACE=$(jq -r '.workspace // empty' task/context.json 2>/dev/null)
+          if [ -z "$TASK_TITLE" ]; then exit 0; fi
+          PAYLOAD=$(jq -n --arg q "$TASK_TITLE" --arg ws "$WORKSPACE" '{query: $q, tags: [$ws], limit: 5}')
+          RESULT=$(curl -sf -X POST "${JOURNAL_MCP_URL:-http://journal-mcp:3003}/api/search" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" 2>/dev/null) || exit 0
+          COUNT=$(echo "$RESULT" | jq '.entries | length' 2>/dev/null)
+          if [ "$COUNT" = "0" ] || [ -z "$COUNT" ]; then exit 0; fi
+          echo "## Working Memory"
+          echo ""
+          echo "You have persistent working memory. Use /recall-memory to search past context. Use /write-journal at session end to save learnings."
+          echo ""
+          echo "### Relevant entries from past sessions:"
+          echo ""
+          echo "$RESULT" | jq -r '.entries[] | "**[\(.type)]** \(.created_at[:10]) — \(.content)\n> \(.context)\n> Tags: \(.tags | join(", "))\n"' 2>/dev/null
+    Stop:
+      - name: "Validate journal.md"
+        command: |
+          INPUT=$(cat)
+          STOP_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)
+          if [ "$STOP_ACTIVE" = "true" ]; then exit 0; fi
+          if [ ! -f task/journal.md ]; then
+            echo "BLOCKED: You must write task/journal.md with learnings before ending the session. Use /write-journal skill." >&2
+            exit 2
+          fi
+        blocking: true
