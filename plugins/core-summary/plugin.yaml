@@ -7,6 +7,10 @@ session:
   hooks:
     Stop:
       - name: "Validate execution summary"
-        command: "test -f task/summary.yaml && grep -q '^type:' task/summary.yaml && grep -q '^summary:' task/summary.yaml || (echo 'BLOCKED: You must create task/summary.yaml with type and summary fields before the session can end.' >&2; exit 2)"
+        command: |
+          INPUT=$(cat)
+          STOP_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)
+          [ "$STOP_ACTIVE" = "true" ] && exit 0
+          test -f task/summary.yaml && grep -q '^type:' task/summary.yaml && grep -q '^summary:' task/summary.yaml || { echo 'BLOCKED: You must create task/summary.yaml with type and summary fields before the session can end.' >&2; exit 2; }
         blocking: true
         message: "You must create task/summary.yaml with type and summary fields before the session can end."

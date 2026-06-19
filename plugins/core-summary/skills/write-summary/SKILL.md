@@ -1,6 +1,6 @@
 # Execution Summary
 
-Before ending the session, you MUST create `task/summary.yaml` with a structured summary of your work. The Stop hook will validate this file — if it's missing or malformed, you will be blocked from ending the session.
+Before ending the session, you MUST create `task/summary.yaml` with a structured summary of your work. The Stop hook checks that `task/summary.yaml` exists and declares top-level `type:` and `summary:` fields; the remaining fields and count invariants are conventions the reviewer and history-service rely on.
 
 ## Format
 
