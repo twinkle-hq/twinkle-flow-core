@@ -4,13 +4,13 @@ The **core / optional-effectiveness** tier of the Orchestra plugin catalog.
 These three plugins make a worker session *more effective* — they give it
 persistent memory, cross-session state, and a structured execution summary — but
 the platform runs without them. They are the middle tier between
-[`twinkle-flow-system`](https://github.com/artme-dev/twinkle-flow-system) (the
+[`twinkle-flow-system`](https://github.com/twinkle-hq/twinkle-flow-system) (the
 locked life-support layer) and the per-workspace company libraries.
 
 ```toml
 # flows.toml
 [package]
-name = "artme-dev/twinkle-flow-core"
+name = "twinkle-hq/twinkle-flow-core"
 version = "v0.1.0"
 
 [exports]
@@ -78,7 +78,7 @@ Only one core artifact crosses the worker → runner → service boundary:
 ## Testing
 
 The two-tier test template is inherited from the
-[`twinkle-flow-system`](https://github.com/artme-dev/twinkle-flow-system) repo
+[`twinkle-flow-system`](https://github.com/twinkle-hq/twinkle-flow-system) repo
 (the gold-standard pattern).
 
 ### Tier 1 — deterministic hook-command harness (CI-runnable)
@@ -99,7 +99,7 @@ The cross-plugin aggregation **capstone** —
 `services/controllers/runner/tests/stop-aggregation.bats` — is a docker-based
 Tier-1 test that pins the claude-code multi-Stop aggregation behavior against
 worker-image bumps (see the
-[stop-hook contract](https://github.com/artme-dev/twinkle-flow-system/blob/main/docs/stop-hook-contract.md)).
+[stop-hook contract](https://github.com/twinkle-hq/twinkle-flow-system/blob/main/docs/stop-hook-contract.md)).
 
 ### Tier 2 — live sandbox lane (integration confidence)
 

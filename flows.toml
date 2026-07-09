@@ -1,5 +1,5 @@
 [package]
-name = "artme-dev/twinkle-flow-core"
+name = "twinkle-hq/twinkle-flow-core"
 version = "v0.1.0"
 
 [exports]
