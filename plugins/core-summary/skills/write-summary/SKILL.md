@@ -1,13 +1,4 @@
----
-name: write-summary
-description: Write summary.yaml in the task directory — the structured execution summary (type, summary, changes, decisions) that becomes the execution-summary report. Use before ending a session, or when the core-summary Stop gate blocks on a missing summary.yaml.
----
-
 # Execution Summary
-
-`task/` in this skill means the task directory the session start names —
-`$TWINKLE_TASK_DIR` (`/task`) on current runners. Use that path as given; do
-not create a `task/` directory of your own in the repository.
 
 Before ending the session, you MUST create `task/summary.yaml` with a structured summary of your work. The Stop hook checks that `task/summary.yaml` exists and declares top-level `type:` and `summary:` fields; the remaining fields and count invariants are conventions the reviewer and history-service rely on.
 

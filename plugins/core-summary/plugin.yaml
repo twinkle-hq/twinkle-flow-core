@@ -8,16 +8,9 @@ session:
     Stop:
       - name: "Validate execution summary"
         command: |
-          # Gate artifact: task/summary.yaml, the task directory's summary.yaml.
-          # stdin goes straight to jq; dash's echo would rewrite backslash
-          # escapes inside the JSON and lose stop_hook_active.
-          STOP_ACTIVE=$(jq -r '.stop_hook_active // false' 2>/dev/null)
+          INPUT=$(cat)
+          STOP_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)
           [ "$STOP_ACTIVE" = "true" ] && exit 0
-          P="${CLAUDE_PROJECT_DIR:-.}"
-          T="${TWINKLE_TASK_DIR:-$P/task}"
-          S="$T/summary.yaml"
-          if [ -f "$S" ] && grep -q '^type:' "$S" && grep -q '^summary:' "$S"; then
-            exit 0
-          fi
-          echo "BLOCKED: You must create $S with type and summary fields before the session can end. The write-summary skill (/core-summary:write-summary) has the format." >&2
-          exit 2
+          test -f task/summary.yaml && grep -q '^type:' task/summary.yaml && grep -q '^summary:' task/summary.yaml || { echo 'BLOCKED: You must create task/summary.yaml with type and summary fields before the session can end.' >&2; exit 2; }
+        blocking: true
+        message: "You must create task/summary.yaml with type and summary fields before the session can end."

@@ -7,8 +7,9 @@ Requires the agent to write a **structured execution summary** before the sessio
 ends. This is the **only** core artifact the runner actually consumes: it becomes
 the worker's `execution-summary` typed report in history-service. It contributes:
 
-- the **`write-summary`** skill (the format reference, `/core-summary:write-summary`);
-- a blocking **`Stop`** gate that requires `summary.yaml` in the task directory.
+- the **`write-summary`** skill (the format reference, available as
+  `/write-summary`);
+- a blocking **`Stop`** gate that requires `task/summary.yaml`.
 
 ## `summary.yaml` → `execution-summary` report
 
@@ -57,7 +58,7 @@ Two `type` shapes:
 ## Dependencies & runtime
 
 - `jq` (parsing the Stop stdin), `grep`, `test` — present in the worker image.
-- Paths: the task directory is `${TWINKLE_TASK_DIR:-$CLAUDE_PROJECT_DIR/task}`; nothing depends on the cwd. POSIX `/bin/sh` (dash); blocking is `exit 2`.
+- cwd `/work`; POSIX `/bin/sh` (dash); blocking is `exit 2`.
 - `stop_hook_active` caps blocking at one round.
 
 ## Testing
