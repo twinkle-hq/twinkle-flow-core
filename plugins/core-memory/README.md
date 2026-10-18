@@ -9,11 +9,10 @@ end. The memory itself lives in the **journal-mcp** vector store, scoped per
 worker — it survives across sessions, unlike anything in the worker's `task/`
 directory. The plugin contributes:
 
-- `session.mcp: [journal-mcp]` — declares the journal-mcp dependency so the runner
-  wires its tools into the worker's `.mcp.json`;
-- the **`recall-memory`** capability (the recall path, compiled into SKILL.md
-  and available as `/recall-memory`);
-- the **`write-journal`** skill (the save path, available as `/write-journal`);
+- `session.mcp: [journal-mcp]` — declares the journal-mcp dependency so the runner registers it for the session (`--mcp-config` on a runner-native-config runner, the repository's `.mcp.json` on an older one);
+- the **`recall-memory`** capability (the recall path, compiled into SKILL.md,
+  `/core-memory:recall-memory`);
+- the **`write-journal`** skill (the save path, `/core-memory:write-journal`);
 - a **SessionStart** priming hook (static, curl-free);
 - a blocking **`Stop`** gate that requires `task/journal.md` — **degrading** to a
   no-op when journal-mcp is not wired.
@@ -41,10 +40,10 @@ relied on env vars the worker container never had. In its place:
 
 - The **`recall-memory`** capability instructs the agent to call `journal_search`
   (with at least one query, broadening if sparse) and apply the retrieved context
-  to the current task. Trigger it via `/recall-memory`, or it activates when the
+  to the current task. Trigger it via `/core-memory:recall-memory`, or it activates when the
   agent recognizes it needs prior context.
 - A **static SessionStart hook** echoes a curl-free priming block —
-  `## Working Memory` plus a note to use `/recall-memory` and `/write-journal` —
+  `## Working Memory` plus a note naming both skills —
   so the agent knows the capability exists.
 
 ## Save — the `write-journal` skill
@@ -63,14 +62,18 @@ If the `journal_*` tools are **unavailable** in a session, the skill still write
 
 A blocking `Stop` hook (POSIX `/bin/sh`):
 
-1. Reads the Stop payload on stdin; **exits 0 immediately when `stop_hook_active`
-   is true** (one-round blocking cap).
-2. **`grep -q 'journal-mcp' .mcp.json || exit 0`** — if journal-mcp is **not**
-   wired into `.mcp.json`, the gate **no-ops**. This is the optional-effectiveness
-   degradation: the gate never demands a reflection artifact whose backing tools
-   are absent.
-3. Otherwise, **exits 2 (blocks)** if `task/journal.md` is missing, pointing the
-   agent at `/write-journal`.
+1. Reads the Stop payload from stdin with `jq` directly; **exits 0
+   immediately when `stop_hook_active` is true** (one-round blocking cap).
+2. **Is journal-mcp wired?** On a runner-native-config runner the answer is
+   `TWINKLE_MCP_SERVERS` (a comma list the runner always sets, possibly
+   empty): the gate arms only when `journal-mcp` is one of its items. A
+   repository's own `.mcp.json` is never consulted there. On an older runner
+   (`TWINKLE_MCP_SERVERS` unset) it is
+   `grep -q 'journal-mcp' "$CLAUDE_PROJECT_DIR/.mcp.json"`. Either way an
+   unwired session **no-ops** — the gate never demands a reflection artifact
+   whose backing tools are absent.
+3. Otherwise, **exits 2 (blocks)** if `journal.md` is missing from the task
+   directory, naming its absolute path and `/core-memory:write-journal`.
 
 `task/journal.md` is an **in-session reflection marker only** — it has no service
 consumer. The real persistence is the `journal_write` MCP tool; journal.md just
@@ -93,7 +96,7 @@ write/recall skills note tools are unavailable.
 
 - `jq` (parsing the Stop stdin), `grep` — present in the worker image.
 - journal-mcp (for the tools; the gate degrades gracefully without it).
-- cwd `/work`; POSIX `/bin/sh` (dash); blocking is `exit 2`.
+- Paths: the task directory is `${TWINKLE_TASK_DIR:-$CLAUDE_PROJECT_DIR/task}`; nothing depends on the cwd. POSIX `/bin/sh` (dash); blocking is `exit 2`.
 - `stop_hook_active` caps blocking at one round.
 
 ## Testing
@@ -106,7 +109,13 @@ Tier-1 deterministic suite (run under dash):
 - `journal.md` absent + **no** journal-mcp in `.mcp.json` → exit 0 (the
   degradation);
 - `stop_hook_active: true` → exit 0;
-- the dead `/api/search` SessionStart curl is **gone**.
+- the dead `/api/search` SessionStart curl is **gone**;
+- runner-native-config: `TWINKLE_MCP_SERVERS` containing `journal-mcp` arms
+  the gate; without it — empty included — the gate is a no-op even when the
+  repository's `.mcp.json` names journal-mcp; a name that merely contains
+  `journal-mcp` does not arm it;
+- an older runner: `.mcp.json` is read at `$CLAUDE_PROJECT_DIR`, not the cwd;
+- a Stop payload carrying a JSON escape keeps `stop_hook_active`.
 
 Tier-2 live (`tests/scenarios/harness/core-plugins-live.test.mjs`): the journal
 **write → recall round-trip** — a unique marker written via `journal_write` in
