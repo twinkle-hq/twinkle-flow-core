@@ -55,8 +55,7 @@ explicit `enabled=0` row. External / custom providers continue to require an
 explicit enabled row.
 
 Because the tier is optional-effectiveness, `core-memory`'s `Stop` gate also
-**degrades to a no-op when journal-mcp is not wired** — `TWINKLE_MCP_SERVERS`
-on a runner-native-config runner, `.mcp.json` on an older one — so it never
+**degrades to a no-op when `.mcp.json` has no journal-mcp server** — it never
 blocks a session on a reflection artifact whose backing tools are absent.
 
 ## Artifact-consumption reality

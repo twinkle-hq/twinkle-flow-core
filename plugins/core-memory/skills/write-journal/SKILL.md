@@ -10,10 +10,6 @@ tools:
 
 Reflect on what happened in this session and record significant events.
 
-`task/` in this skill means the task directory the session start names —
-`$TWINKLE_TASK_DIR` (`/task`) on current runners. Use that path as given; do
-not create a `task/` directory of your own in the repository.
-
 ## Process
 
 1. Call `journal_recent` MCP tool to review your recent memory
