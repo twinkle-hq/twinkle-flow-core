@@ -14,17 +14,32 @@ session:
         command: |
           echo "## Working Memory"
           echo ""
-          echo "You have persistent working memory. Use /recall-memory to search past context; use /write-journal at session end to save learnings."
+          echo "You have persistent working memory. Use the recall-memory skill (/core-memory:recall-memory) to search past context; use the write-journal skill (/core-memory:write-journal) at session end to save learnings."
           exit 0
     Stop:
       - name: "Validate journal.md"
         command: |
-          INPUT=$(cat)
-          STOP_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)
+          # Gate artifact: task/journal.md, the task directory's journal.md.
+          # stdin goes straight to jq; dash's echo would rewrite backslash
+          # escapes inside the JSON and lose stop_hook_active.
+          STOP_ACTIVE=$(jq -r '.stop_hook_active // false' 2>/dev/null)
           if [ "$STOP_ACTIVE" = "true" ]; then exit 0; fi
-          grep -q 'journal-mcp' .mcp.json 2>/dev/null || exit 0
-          if [ ! -f task/journal.md ]; then
-            echo "BLOCKED: You must write task/journal.md with learnings before ending the session. Use /write-journal skill." >&2
+          P="${CLAUDE_PROJECT_DIR:-.}"
+          T="${TWINKLE_TASK_DIR:-$P/task}"
+          # The gate applies only when journal-mcp is wired into this session. A
+          # runner-native-config runner names its MCP servers in
+          # TWINKLE_MCP_SERVERS (a comma list, set even when empty); an older
+          # runner wrote them into the repository's .mcp.json instead.
+          if [ -n "${TWINKLE_MCP_SERVERS+set}" ]; then
+            case ",$TWINKLE_MCP_SERVERS," in
+              *,journal-mcp,*) ;;
+              *) exit 0 ;;
+            esac
+          else
+            grep -q 'journal-mcp' "$P/.mcp.json" 2>/dev/null || exit 0
+          fi
+          if [ ! -f "$T/journal.md" ]; then
+            echo "BLOCKED: You must write $T/journal.md with learnings before ending the session. Use the write-journal skill (/core-memory:write-journal)." >&2
             exit 2
           fi
-        blocking: true
+          exit 0
