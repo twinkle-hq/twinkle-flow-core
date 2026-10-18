@@ -9,7 +9,7 @@ fresh per task and thrown away), `state.md` lives at the **repo root**, is
 committed to the worker git repo, and is re-injected at the start of the next
 session. It contributes:
 
-- the **`update-state`** skill (the recipe, available as `/update-state`);
+- the **`update-state`** skill (the recipe, `/core-state:update-state`);
 - a **SessionStart** hook that re-injects the current `state.md`;
 - a blocking **`Stop`** gate that requires an updated `state.md`.
 
@@ -37,7 +37,7 @@ The `Stop` gate enforces more than mere presence. A blocking `Stop` hook (POSIX
    is true** (one-round blocking cap).
 2. **Exits 2 (blocks)** if `state.md` is missing, **or** if its **first line**
    does not carry a `<!-- last_task: ... -->` marker. The message points at
-   `/update-state`.
+   `/core-state:update-state`.
 
 Requiring the first-line marker makes the `update-state` skill's contract real:
 the skill claims the marker is mandatory, and the gate now enforces it (a stale,
@@ -59,7 +59,7 @@ comment the **first line**, and update the date.
 ## Dependencies & runtime
 
 - `jq` (parsing the Stop stdin), `grep`, `head` — present in the worker image.
-- cwd `/work`; POSIX `/bin/sh` (dash); blocking is `exit 2`.
+- Paths: `state.md` is `$CLAUDE_PROJECT_DIR/state.md`; nothing depends on the cwd. The Stop payload is read with `jq` from stdin directly. POSIX `/bin/sh` (dash); blocking is `exit 2`.
 - `stop_hook_active` caps blocking at one round.
 - No service dependency — `state.md` has no service consumer; it persists only via
   the worker git repo commit.
