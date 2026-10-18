@@ -1,6 +1,6 @@
 [package]
 name = "twinkle-hq/twinkle-flow-core"
-version = "v0.1.0"
+version = "v0.1.1"
 
 [exports]
 plugins = "*"
