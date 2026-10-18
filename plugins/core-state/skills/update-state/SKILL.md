@@ -5,11 +5,6 @@ description: Update state.md with current session results. Use at end of each se
 
 Update the agent state file that persists between sessions.
 
-`task/` in this skill means the task directory the session start names —
-`$TWINKLE_TASK_DIR` (`/task`) on current runners. Use that path as given; do
-not create a `task/` directory of your own in the repository. `state.md` is
-different: it lives at the repository root.
-
 ## Process
 
 1. Read current `state.md` in the repo root (if it exists)

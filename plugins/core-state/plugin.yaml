@@ -8,23 +8,19 @@ session:
     SessionStart:
       - name: "Inject current agent state"
         command: |
-          # state.md lives at the repository root: CLAUDE_PROJECT_DIR, never the cwd.
-          P="${CLAUDE_PROJECT_DIR:-.}"
-          if [ -f "$P/state.md" ]; then
+          if [ -f state.md ]; then
             echo "## Agent State"
             echo ""
-            cat "$P/state.md"
+            cat state.md
           fi
     Stop:
       - name: "Validate state.md updated"
         command: |
-          # stdin goes straight to jq; dash's echo would rewrite backslash
-          # escapes inside the JSON and lose stop_hook_active.
-          STOP_ACTIVE=$(jq -r '.stop_hook_active // false' 2>/dev/null)
+          INPUT=$(cat)
+          STOP_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)
           if [ "$STOP_ACTIVE" = "true" ]; then exit 0; fi
-          P="${CLAUDE_PROJECT_DIR:-.}"
-          if [ ! -f "$P/state.md" ] || ! head -n1 "$P/state.md" | grep -q '<!-- last_task:'; then
-            echo "BLOCKED: You must update state.md at the repository root (first line must be a <!-- last_task: ... --> marker) before ending the session. Use the update-state skill (/core-state:update-state)." >&2
+          if [ ! -f state.md ] || ! head -n1 state.md | grep -q '<!-- last_task:'; then
+            echo "BLOCKED: You must update state.md (first line must be a <!-- last_task: ... --> marker) before ending the session. Use /update-state skill." >&2
             exit 2
           fi
-          exit 0
+        blocking: true
