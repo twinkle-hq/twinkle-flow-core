@@ -26,18 +26,11 @@ session:
           if [ "$STOP_ACTIVE" = "true" ]; then exit 0; fi
           P="${CLAUDE_PROJECT_DIR:-.}"
           T="${TWINKLE_TASK_DIR:-$P/task}"
-          # The gate applies only when journal-mcp is wired into this session. A
-          # runner-native-config runner names its MCP servers in
-          # TWINKLE_MCP_SERVERS (a comma list, set even when empty); an older
-          # runner wrote them into the repository's .mcp.json instead.
-          if [ -n "${TWINKLE_MCP_SERVERS+set}" ]; then
-            case ",$TWINKLE_MCP_SERVERS," in
-              *,journal-mcp,*) ;;
-              *) exit 0 ;;
-            esac
-          else
-            grep -q 'journal-mcp' "$P/.mcp.json" 2>/dev/null || exit 0
-          fi
+          # The runner names the MCP servers it wired in TWINKLE_MCP_SERVERS.
+          case ",${TWINKLE_MCP_SERVERS:-}," in
+            *,journal-mcp,*) ;;
+            *) exit 0 ;;
+          esac
           if [ ! -f "$T/journal.md" ]; then
             echo "BLOCKED: You must write $T/journal.md with learnings before ending the session. Use the write-journal skill (/core-memory:write-journal)." >&2
             exit 2

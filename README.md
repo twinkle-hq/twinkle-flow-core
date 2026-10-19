@@ -37,8 +37,9 @@ platform.
 
 `core-memory` is the only plugin in this tier with a service dependency: its
 memory tools (`journal_write` / `journal_search` / `journal_recent`) reach the
-agent only through the **journal-mcp** MCP service, written into the worker's
-`.mcp.json` by the runner's `dispatch_mcp_integrations`. That dispatcher resolves
+agent only through the **journal-mcp** MCP service, written into the run-scoped
+`mcp.json` (passed with `--mcp-config`) by the runner's
+`dispatch_mcp_integrations`. That dispatcher resolves
 provider names against `GET mcp-registry/integrations/<ws>/resolve`.
 
 Historically journal-mcp was silently absent on any workspace that had no
@@ -55,8 +56,8 @@ explicit `enabled=0` row. External / custom providers continue to require an
 explicit enabled row.
 
 Because the tier is optional-effectiveness, `core-memory`'s `Stop` gate also
-**degrades to a no-op when journal-mcp is not wired** — `TWINKLE_MCP_SERVERS`
-on a runner-native-config runner, `.mcp.json` on an older one — so it never
+**degrades to a no-op when journal-mcp is not among the servers the runner
+names in `TWINKLE_MCP_SERVERS`** — so it never
 blocks a session on a reflection artifact whose backing tools are absent.
 
 ## Artifact-consumption reality

@@ -64,14 +64,12 @@ A blocking `Stop` hook (POSIX `/bin/sh`):
 
 1. Reads the Stop payload from stdin with `jq` directly; **exits 0
    immediately when `stop_hook_active` is true** (one-round blocking cap).
-2. **Is journal-mcp wired?** On a runner-native-config runner the answer is
-   `TWINKLE_MCP_SERVERS` (a comma list the runner always sets, possibly
-   empty): the gate arms only when `journal-mcp` is one of its items. A
-   repository's own `.mcp.json` is never consulted there. On an older runner
-   (`TWINKLE_MCP_SERVERS` unset) it is
-   `grep -q 'journal-mcp' "$CLAUDE_PROJECT_DIR/.mcp.json"`. Either way an
-   unwired session **no-ops** — the gate never demands a reflection artifact
-   whose backing tools are absent.
+2. **Is journal-mcp wired?** The answer is `TWINKLE_MCP_SERVERS` (a comma
+   list the runner sets, possibly empty): the gate arms only when
+   `journal-mcp` is one of its items. A repository's own `.mcp.json` is never
+   consulted. An unwired session — the variable empty or unset included —
+   **no-ops**: the gate never demands a reflection artifact whose backing
+   tools are absent.
 3. Otherwise, **exits 2 (blocks)** if `journal.md` is missing from the task
    directory, naming its absolute path and `/core-memory:write-journal`.
 
@@ -81,8 +79,8 @@ gives the gate something observable to enforce.
 
 ## Dependency — journal-mcp must be resolvable
 
-`journal_*` tools reach the agent only via `.mcp.json`, written by the runner's
-`dispatch_mcp_integrations` from `GET mcp-registry/integrations/<ws>/resolve`.
+`journal_*` tools reach the agent only via the run-scoped `mcp.json` the runner
+passes with `--mcp-config`, written by its `dispatch_mcp_integrations` from `GET mcp-registry/integrations/<ws>/resolve`.
 journal-mcp is a builtin **`connection_type: internal`** provider, and as of the
 Wave 2 resolve-default fix (§1a), `resolveIntegrations` returns builtin-internal
 providers **enabled-by-default** — the union of explicit enabled integrations and
@@ -94,7 +92,7 @@ write/recall skills note tools are unavailable.
 
 ## Dependencies & runtime
 
-- `jq` (parsing the Stop stdin), `grep` — present in the worker image.
+- `jq` (parsing the Stop stdin) — present in the worker image.
 - journal-mcp (for the tools; the gate degrades gracefully without it).
 - Paths: the task directory is `${TWINKLE_TASK_DIR:-$CLAUDE_PROJECT_DIR/task}`; nothing depends on the cwd. POSIX `/bin/sh` (dash); blocking is `exit 2`.
 - `stop_hook_active` caps blocking at one round.
@@ -104,17 +102,14 @@ write/recall skills note tools are unavailable.
 Tier-1 deterministic suite (run under dash):
 `services/controllers/runner/tests/core-memory.bats`. It asserts:
 
-- `journal.md` present + journal-mcp in `.mcp.json` → exit 0;
-- `journal.md` absent + journal-mcp in `.mcp.json` → exit 2;
-- `journal.md` absent + **no** journal-mcp in `.mcp.json` → exit 0 (the
-  degradation);
+- `TWINKLE_MCP_SERVERS` unset → exit 0, whatever the repository's `.mcp.json`
+  says;
 - `stop_hook_active: true` → exit 0;
 - the dead `/api/search` SessionStart curl is **gone**;
 - runner-native-config: `TWINKLE_MCP_SERVERS` containing `journal-mcp` arms
   the gate; without it — empty included — the gate is a no-op even when the
   repository's `.mcp.json` names journal-mcp; a name that merely contains
   `journal-mcp` does not arm it;
-- an older runner: `.mcp.json` is read at `$CLAUDE_PROJECT_DIR`, not the cwd;
 - a Stop payload carrying a JSON escape keeps `stop_hook_active`.
 
 Tier-2 live (`tests/scenarios/harness/core-plugins-live.test.mjs`): the journal
